@@ -35,7 +35,7 @@ def generate_pdf(entry_data, output_path):
     c.drawImage(ImageReader(bg_image), 0, 0, width=width, height=height)
 
     # Prepare name
-    first_name = entry_data['Attendee first name'].strip()
+    first_name = entry_data['Attendee first name'].strip().title()
     last_name = entry_data['Attendee last name'].strip().upper()  # Uppercase last name
     full_name_lines = [first_name, last_name]
 
@@ -153,7 +153,5 @@ def test_sample_pdf():
 
 # ---- Entry point ----
 if __name__ == "__main__":
-    # output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
-    # if output_pdf:
-    #     print_pdf(output_pdf)  # Uncomment to test printing
-    test_sample_pdf()         # Comment this out if not testing sample PDF
+    output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
+    # test_sample_pdf()         # Comment this out if not testing sample PDF
