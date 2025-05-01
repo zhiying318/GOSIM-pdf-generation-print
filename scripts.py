@@ -85,7 +85,7 @@ def scan_qr_and_generate():
     cap = cv2.VideoCapture(CAMERA_INDEX)
     detector = cv2.QRCodeDetector()
     scanned_ids = set()
-
+    output_pdf = None
     print("Starting webcam scan... Press ESC to quit.")
 
     while True:
@@ -100,16 +100,17 @@ def scan_qr_and_generate():
                 print(f"Detected QR Code ID: {qr_id}")
                 scanned_ids.add(qr_id)
 
-                matched = df[df['id'] == data]
+                matched = df[df['id'] == qr_id]
+
                 if not matched.empty:
                     entry = matched.iloc[0]
-                    output_pdf = os.path.join(PDF_OUTPUT_DIR, f"{data}.pdf")
+                    output_pdf = os.path.join(PDF_OUTPUT_DIR, f"{qr_id}.pdf")
                     generate_pdf(entry, output_pdf)
                     print(f"PDF generated: {output_pdf}")
                     print_pdf(output_pdf)
                     print(f"Printed: {output_pdf}")
                 else:
-                    print(f"No matching entry found for ID: {data}")
+                    print(f"No matching entry found for ID: {qr_id}")
 
         cv2.imshow('QR Scanner', frame)
         if cv2.waitKey(1) == 27:
@@ -118,6 +119,7 @@ def scan_qr_and_generate():
 
     cap.release()
     cv2.destroyAllWindows()
+    return output_pdf
 
 # ---- Test QR in Sample PDF ----
 def test_sample_pdf():
@@ -144,10 +146,14 @@ def test_sample_pdf():
         output_pdf = os.path.join(PDF_OUTPUT_DIR, f"test_{data}.pdf")
         generate_pdf(entry, output_pdf)
         print(f"✅ Test PDF generated: {output_pdf}")
+        return output_pdf
     else:
         print(f"⚠️ No match found for ID: {qr_id}")
+        return None
 
 # ---- Entry point ----
 if __name__ == "__main__":
-    # scan_qr_and_generate()  # Uncomment to use webcam
+    # output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
+    # if output_pdf:
+    #     print_pdf(output_pdf)  # Uncomment to test printing
     test_sample_pdf()         # Comment this out if not testing sample PDF
