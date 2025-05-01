@@ -8,6 +8,7 @@ import os
 import time
 import subprocess
 from pdf2image import convert_from_path
+import qrcode
 
 # ---- CONFIG ----
 CSV_PATH = 'GOSIM_AI_PARIS_Attendees_1217254842023_20250501_080105_527.csv'
@@ -52,6 +53,19 @@ def generate_pdf(entry_data, output_path):
         x = (width - text_width) / 2
         y = start_y - i * (font_size + 10)
         c.drawString(x, y, line)
+
+    # ---- Generate new QR code containing Order id under the name ----
+    qr_id = str(entry_data['id'])[:11]
+    qr_img = qrcode.make(qr_id)
+
+    qr_size = 200  # pixels
+    qr_img = qr_img.resize((qr_size, qr_size), Image.LANCZOS)
+
+    # Calculate position: centered below last name
+    qr_x = (width - qr_size) / 2
+    qr_y = start_y - len(full_name_lines) * (font_size + 10) - qr_size - 30
+
+    c.drawImage(ImageReader(qr_img), qr_x, qr_y, width=qr_size, height=qr_size)
 
     c.save()
 
