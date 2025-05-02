@@ -9,6 +9,7 @@ import time
 import subprocess
 from pdf2image import convert_from_path
 import qrcode
+from reportlab.lib.units import mm
 
 # ---- CONFIG ----
 CSV_PATH = 'GOSIM_AI_PARIS_Attendees_1217254842023_20250501_080105_527.csv'
@@ -28,11 +29,16 @@ df['id'] = df['Order ID'].astype(str)
 # ---- PDF Generation ----
 def generate_pdf(entry_data, output_path):
     bg_image = Image.open(BACKGROUND_IMAGE_PATH)
-    width, height = bg_image.size
-    c = canvas.Canvas(output_path, pagesize=(width, height))
+    print(f"Background image size (pixels): width={bg_image.width}, height={bg_image.height}")
 
-    # Draw background
-    c.drawImage(ImageReader(bg_image), 0, 0, width=width, height=height)
+    # width, height = bg_image.size
+    # c = canvas.Canvas(output_path, pagesize=(width, height))
+    page_width = 96 * mm
+    page_height = 268 * mm
+    c = canvas.Canvas(output_path, pagesize=(page_width, page_height))
+
+    # Draw background and drag image to fit
+    c.drawImage(ImageReader(bg_image), 0, 0, width=page_width, height=page_height)
 
     # Prepare name
     first_name = entry_data['Attendee first name'].strip().title()
@@ -41,16 +47,16 @@ def generate_pdf(entry_data, output_path):
 
     # Font settings
     font_name = "Helvetica-Bold"
-    font_size = 80
+    font_size = 28
     c.setFont(font_name, font_size)
 
     # Calculate vertical start position: under "GOSIM AI PARIS 2025"
-    start_y = height - 900  # parameter adjusted
+    start_y = page_height - 65*mm  # parameter adjusted
 
     # Draw each line centered
     for i, line in enumerate(full_name_lines):
         text_width = c.stringWidth(line, font_name, font_size)
-        x = (width - text_width) / 2
+        x = (page_width - text_width) / 2
         y = start_y - i * (font_size + 10)
         c.drawString(x, y, line)
 
@@ -58,14 +64,20 @@ def generate_pdf(entry_data, output_path):
     qr_id = str(entry_data['id'])[:11]
     qr_img = qrcode.make(qr_id)
 
-    qr_size = 200  # pixels
-    qr_img = qr_img.resize((qr_size, qr_size), Image.LANCZOS)
+    qr_size = 22*mm  # mm
+    qr_img = qr_img.resize((int(qr_size), int(qr_size)), Image.LANCZOS)
 
     # Calculate position: centered below last name
-    qr_x = (width - qr_size) / 2
-    qr_y = start_y - len(full_name_lines) * (font_size + 10) - qr_size - 30
+    qr_x = (page_width - qr_size) / 2
+    qr_y = start_y - len(full_name_lines) * (font_size + 10) - qr_size + 3*mm
 
     c.drawImage(ImageReader(qr_img), qr_x, qr_y, width=qr_size, height=qr_size)
+
+    page_width_pt, page_height_pt = c._pagesize  # unit: points
+    # Convert points to mm
+    page_width_mm = page_width_pt / mm
+    page_height_mm = page_height_pt / mm
+    print(f"Generated PDF size: {page_width_mm:.2f} mm × {page_height_mm:.2f} mm")
 
     c.save()
 
