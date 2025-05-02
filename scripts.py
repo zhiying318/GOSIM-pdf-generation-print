@@ -44,6 +44,15 @@ def alert_beep():
     except Exception as e:
         print(f"[Sound alert failed] {e}", file=sys.stderr)
 
+def fit_font_size(text, font_name, max_width_pt, max_font_size, canvas_obj):
+    font_size = max_font_size
+    while font_size > 10:
+        text_width = canvas_obj.stringWidth(text, font_name, font_size)
+        if text_width <= max_width_pt:
+            return font_size
+        font_size -= 1  # 减小字号直到适合
+    return 10  # 最小字号
+
 # ---- PDF Generation ----
 def generate_pdf(entry_data, output_path):
     bg_image = Image.open(BACKGROUND_IMAGE_PATH)
@@ -72,11 +81,23 @@ def generate_pdf(entry_data, output_path):
     start_y = page_height - 65*mm  # parameter adjusted
 
     # Draw each line centered
+    # for i, line in enumerate(full_name_lines):
+    #     text_width = c.stringWidth(line, font_name, font_size)
+    #     x = (page_width - text_width) / 2
+    #     y = start_y - i * (font_size + 10)
+    #     c.drawString(x, y, line)
+    max_font_size = 30
+    name_y_offset = 0
+
     for i, line in enumerate(full_name_lines):
+        font_size = fit_font_size(line, font_name, page_width * 0.75, max_font_size, c)
+        c.setFont(font_name, font_size)
         text_width = c.stringWidth(line, font_name, font_size)
         x = (page_width - text_width) / 2
-        y = start_y - i * (font_size + 10)
+        y = start_y - name_y_offset
         c.drawString(x, y, line)
+        name_y_offset += 35 
+
 
     # ---- Generate new QR code containing Order id under the name ----
     qr_id = str(entry_data['id'])[:11]
@@ -87,7 +108,7 @@ def generate_pdf(entry_data, output_path):
 
     # Calculate position: centered below last name
     qr_x = (page_width - qr_size) / 2
-    qr_y = start_y - len(full_name_lines) * (font_size + 10) - qr_size + 3*mm
+    qr_y = 165*mm
 
     c.drawImage(ImageReader(qr_img), qr_x, qr_y, width=qr_size, height=qr_size)
 
@@ -186,7 +207,22 @@ def test_sample_pdf():
         print(f"⚠️ No match found for ID: {qr_id}")
         return None
 
+def test_custom_name_pdf():
+    print("Running custom name test: Muhammad Rizwan / ALI")
+
+    entry_data = {
+        'Attendee first name': "cba",
+        'Attendee last name': "ali",
+        'id': "99999999999"  
+    }
+
+    output_path = os.path.join(PDF_OUTPUT_DIR, "test_Muhammad_Rizwan.pdf")
+    generate_pdf(entry_data, output_path)
+    print(f"✅ Custom name test PDF generated: {output_path}")
+
 # ---- Entry point ----
 if __name__ == "__main__":
+    alert_beep()  # Test sound alert
     output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
+    # test_custom_name_pdf()
     # test_sample_pdf()         # Comment this out if not testing sample PDF
