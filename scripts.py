@@ -10,6 +10,8 @@ import subprocess
 from pdf2image import convert_from_path
 import qrcode
 from reportlab.lib.units import mm
+import platform
+import sys
 
 # ---- CONFIG ----
 CSV_PATH = 'GOSIM_AI_PARIS_Attendees_1217254842023_20250501_080105_527.csv'
@@ -25,6 +27,22 @@ os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
 # ---- Load CSV ----
 df = pd.read_csv(CSV_PATH)
 df['id'] = df['Order ID'].astype(str)
+
+# ---- Alarms ----
+def alert_beep():
+    system = platform.system()
+    try:
+        if system == "Windows":
+            import winsound
+            winsound.MessageBeep()
+        elif system == "Darwin":
+            # macOS: use built-in system bell
+            os.system('say "error"')  # read aloud "error"
+        else:
+            # Linux: system bell
+            print('\a')  # ASCII Bell
+    except Exception as e:
+        print(f"[Sound alert failed] {e}", file=sys.stderr)
 
 # ---- PDF Generation ----
 def generate_pdf(entry_data, output_path):
@@ -98,7 +116,7 @@ def scan_qr_and_generate():
     detector = cv2.QRCodeDetector()
     scanned_ids = set()
     output_pdf = None
-    print("Starting webcam scan... Press ESC to quit.")
+    print("Starting webcam scan... Press ctrl+C to quit.")
 
     while True:
         ret, frame = cap.read()
@@ -116,13 +134,18 @@ def scan_qr_and_generate():
 
                 if not matched.empty:
                     entry = matched.iloc[0]
-                    output_pdf = os.path.join(PDF_OUTPUT_DIR, f"{qr_id}.pdf")
-                    generate_pdf(entry, output_pdf)
-                    print(f"PDF generated: {output_pdf}")
-                    print_pdf(output_pdf)
-                    print(f"Printed: {output_pdf}")
+                    try:
+                        output_pdf = os.path.join(PDF_OUTPUT_DIR, f"{qr_id}.pdf")
+                        generate_pdf(entry, output_pdf)
+                        print(f"PDF generated: {output_pdf}")
+                        print_pdf(output_pdf)
+                        print(f"Printed: {output_pdf}")
+                    except Exception as e:
+                        print(f"Error during generating or printing PDF: {e}")
+                        alert_beep()
                 else:
                     print(f"No matching entry found for ID: {qr_id}")
+                    alert_beep()
 
         cv2.imshow('QR Scanner', frame)
         if cv2.waitKey(1) == 27:
