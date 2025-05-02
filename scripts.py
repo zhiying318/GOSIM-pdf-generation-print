@@ -34,7 +34,7 @@ def generate_pdf(entry_data, output_path):
     # width, height = bg_image.size
     # c = canvas.Canvas(output_path, pagesize=(width, height))
     page_width = 96 * mm
-    page_height = 268 * mm
+    page_height = 278 * mm
     c = canvas.Canvas(output_path, pagesize=(page_width, page_height))
 
     # Draw background and drag image to fit
