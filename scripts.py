@@ -15,11 +15,11 @@ import sys
 
 # ---- CONFIG ----
 CSV_PATH = 'GOSIM_AI_PARIS_Attendees_1217254842023_20250501_080105_527.csv'
-SUB_CATEGORY = 'SPEAKER' # Change to needed sub-category (please use the 4 sub-categories in PNG folder)
+SUB_CATEGORY = 'GOSIM' # Change to needed sub-category (please use the 4 sub-categories in PNG folder)
 BACKGROUND_IMAGE_PATH = f'./badge_template/PNG/{SUB_CATEGORY}.png'
 PDF_OUTPUT_DIR = f'./generated_pdfs/{SUB_CATEGORY}'
 SCAN_INTERVAL = 0.1
-CAMERA_INDEX = 0
+CAMERA_INDEX = 1
 PRINT_COMMAND = 'lp'
 
 os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
@@ -27,6 +27,11 @@ os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
 # ---- Load CSV ----
 df = pd.read_csv(CSV_PATH)
 df['id'] = df['Order ID'].astype(str)
+df['Ticket type'] = df['Ticket type'].replace({"General Admission (Early Bird)": "General Admission",
+                                               "GOSIM + Seeed Embodied AI Workshop (Early Bird)": "GOSIM + Seeed Embodied AI Workshop",
+                                               "PyTorch Day France (Access to all GOSIM AI talks)": "PyTorch Day France"
+                                               })
+print(df['Ticket type'].unique())  
 
 # ---- Alarms ----
 def alert_beep():
@@ -51,7 +56,7 @@ def fit_font_size(text, font_name, max_width_pt, max_font_size, canvas_obj):
         if text_width <= max_width_pt:
             return font_size
         font_size -= 1  # 减小字号直到适合
-    return 10  # 最小字号
+    return 8  # 最小字号
 
 # ---- PDF Generation ----
 def generate_pdf(entry_data, output_path):
@@ -70,7 +75,8 @@ def generate_pdf(entry_data, output_path):
     # Prepare name
     first_name = entry_data['Attendee first name'].strip().title()
     last_name = entry_data['Attendee last name'].strip().upper()  # Uppercase last name
-    full_name_lines = [first_name, last_name]
+    ticket_type = entry_data['Ticket Type'].strip()
+    full_name_lines = [first_name, last_name, ticket_type]
 
     # Font settings
     font_name = "Helvetica-Bold"
@@ -90,11 +96,17 @@ def generate_pdf(entry_data, output_path):
     name_y_offset = 0
 
     for i, line in enumerate(full_name_lines):
-        font_size = fit_font_size(line, font_name, page_width * 0.75, max_font_size, c)
+        if i != 2:
+            font_size = fit_font_size(line, font_name, page_width * 0.75, max_font_size, c)
+        else:
+            font_size = 9
         c.setFont(font_name, font_size)
         text_width = c.stringWidth(line, font_name, font_size)
         x = (page_width - text_width) / 2
-        y = start_y - name_y_offset
+        if i == 2:
+            y = start_y - name_y_offset + 10
+        else:
+            y = start_y - name_y_offset
         c.drawString(x, y, line)
         name_y_offset += 35 
 
@@ -159,6 +171,7 @@ def scan_qr_and_generate():
                         output_pdf = os.path.join(PDF_OUTPUT_DIR, f"{qr_id}.pdf")
                         generate_pdf(entry, output_pdf)
                         print(f"PDF generated: {output_pdf}")
+                        os.system(f'say "Welcome {entry["Attendee first name"]}"')  # macOS
                         print_pdf(output_pdf)
                         print(f"Printed: {output_pdf}")
                     except Exception as e:
@@ -211,8 +224,9 @@ def test_custom_name_pdf():
     print("Running custom name test: Muhammad Rizwan / ALI")
 
     entry_data = {
-        'Attendee first name': "cba",
-        'Attendee last name': "ali",
+        'Attendee first name': "Arrua de Oliveira",
+        'Attendee last name': "Arrua de Oliveira",
+        'Ticket Type': "General Admission",
         'id': "99999999999"  
     }
 
@@ -222,7 +236,7 @@ def test_custom_name_pdf():
 
 # ---- Entry point ----
 if __name__ == "__main__":
-    alert_beep()  # Test sound alert
+    # alert_beep()  # Test sound alert
     output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
     # test_custom_name_pdf()
     # test_sample_pdf()         # Comment this out if not testing sample PDF
