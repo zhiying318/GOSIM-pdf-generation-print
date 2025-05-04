@@ -28,8 +28,9 @@ os.makedirs(PDF_OUTPUT_DIR, exist_ok=True)
 df = pd.read_csv(CSV_PATH)
 df['id'] = df['Order ID'].astype(str)
 df['Ticket type'] = df['Ticket type'].replace({"General Admission (Early Bird)": "General Admission",
-                                               "GOSIM + Seeed Embodied AI Workshop (Early Bird)": "GOSIM + Seeed Embodied AI Workshop",
-                                               "PyTorch Day France (Access to all GOSIM AI talks)": "PyTorch Day France"
+                                               "GOSIM + Seeed Embodied AI Workshop (Early Bird)": "Seeed Embodied AI Workshop",
+                                               "PyTorch Day France (Access to all GOSIM AI talks)": "PyTorch Day France",
+                                               "GOSIM + Seeed Embodied AI Workshop": "Seeed Embodied AI Workshop"
                                                })
 print(df['Ticket type'].unique())  
 
@@ -99,7 +100,7 @@ def generate_pdf(entry_data, output_path):
         if i != 2:
             font_size = fit_font_size(line, font_name, page_width * 0.75, max_font_size, c)
         else:
-            font_size = 9
+            font_size = 10
         c.setFont(font_name, font_size)
         text_width = c.stringWidth(line, font_name, font_size)
         x = (page_width - text_width) / 2
@@ -226,7 +227,7 @@ def test_custom_name_pdf():
     entry_data = {
         'Attendee first name': "Arrua de Oliveira",
         'Attendee last name': "Arrua de Oliveira",
-        'Ticket Type': "General Admission",
+        'Ticket Type': "Seeed Embodied AI Workshop",
         'id': "99999999999"  
     }
 
@@ -237,6 +238,6 @@ def test_custom_name_pdf():
 # ---- Entry point ----
 if __name__ == "__main__":
     # alert_beep()  # Test sound alert
-    output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
-    # test_custom_name_pdf()
+    # output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
+    test_custom_name_pdf()
     # test_sample_pdf()         # Comment this out if not testing sample PDF
