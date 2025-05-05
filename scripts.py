@@ -76,7 +76,7 @@ def generate_pdf(entry_data, output_path):
     # Prepare name
     first_name = entry_data['Attendee first name'].strip().title()
     last_name = entry_data['Attendee last name'].strip().upper()  # Uppercase last name
-    ticket_type = entry_data['Ticket Type'].strip()
+    ticket_type = entry_data['Ticket type'].strip()
     full_name_lines = [first_name, last_name, ticket_type]
 
     # Font settings
@@ -225,9 +225,9 @@ def test_custom_name_pdf():
     print("Running custom name test: Muhammad Rizwan / ALI")
 
     entry_data = {
-        'Attendee first name': "Arrua de Oliveira",
-        'Attendee last name': "Arrua de Oliveira",
-        'Ticket Type': "Seeed Embodied AI Workshop",
+        'Attendee first name': "Zhiying",
+        'Attendee last name': "Zou",
+        'Ticket type': "Volunteer",
         'id': "99999999999"  
     }
 
@@ -238,6 +238,6 @@ def test_custom_name_pdf():
 # ---- Entry point ----
 if __name__ == "__main__":
     # alert_beep()  # Test sound alert
-    # output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
-    test_custom_name_pdf()
+    output_pdf = scan_qr_and_generate()  # Uncomment to use webcam
+    # test_custom_name_pdf()
     # test_sample_pdf()         # Comment this out if not testing sample PDF
